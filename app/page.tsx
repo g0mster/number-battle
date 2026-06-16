@@ -16,6 +16,86 @@ function getOrCreatePlayerId(): string {
   return id;
 }
 
+const STEPS = [
+  {
+    icon: '🎲',
+    title: 'Get a random number',
+    desc: 'Each turn you receive a secret number between 0 and 100. Your opponent can\'t see it.',
+    visual: (
+      <div className="flex gap-2 justify-center mt-3">
+        {[42, '?', '?'].map((n, i) => (
+          <div key={i} className="w-12 h-12 rounded-xl flex items-center justify-center font-black text-lg"
+            style={{
+              background: i === 0 ? 'rgba(108,99,255,0.18)' : 'var(--bg)',
+              border: `1.5px solid ${i === 0 ? 'var(--accent)' : 'var(--border)'}`,
+              color: i === 0 ? 'var(--accent)' : 'var(--muted)',
+            }}>
+            {n}
+          </div>
+        ))}
+      </div>
+    ),
+  },
+  {
+    icon: '⚡',
+    title: 'Choose your move',
+    desc: 'You have 3 options every turn:',
+    visual: (
+      <div className="flex flex-col gap-1.5 mt-3">
+        <div className="rounded-lg px-3 py-2 text-left"
+          style={{ background: 'rgba(108,99,255,0.12)', border: '1px solid var(--accent)' }}>
+          <span className="text-xs font-bold" style={{ color: 'var(--accent)' }}>✅ Lock in 42</span>
+          <span className="text-xs ml-2" style={{ color: 'var(--muted)' }}>— keep this number</span>
+        </div>
+        <div className="rounded-lg px-3 py-2 text-left"
+          style={{ background: 'rgba(108,99,255,0.06)', border: '1px solid var(--border)' }}>
+          <span className="text-xs font-bold" style={{ color: 'var(--accent)' }}>🔄 Lock in 58</span>
+          <span className="text-xs ml-2" style={{ color: 'var(--muted)' }}>— flip it (100−42)</span>
+        </div>
+        <div className="rounded-lg px-3 py-2 text-left"
+          style={{ background: 'rgba(255,101,132,0.08)', border: '1px solid var(--border)' }}>
+          <span className="text-xs font-bold" style={{ color: 'var(--accent2)' }}>🎲 Pass & Reroll</span>
+          <span className="text-xs ml-2" style={{ color: 'var(--muted)' }}>— skip, max 5×</span>
+        </div>
+      </div>
+    ),
+  },
+  {
+    icon: '🔍',
+    title: 'Watch for hints',
+    desc: 'After both players have had a turn in a round, a hint number is revealed — it falls somewhere between both draws. Use it to bluff or strategise.',
+    visual: (
+      <div className="mt-3 rounded-lg px-3 py-2 text-center"
+        style={{ background: 'rgba(255,101,132,0.1)', border: '1px solid var(--accent2)' }}>
+        <p className="text-xs font-semibold" style={{ color: 'var(--accent2)' }}>🔍 ROUND HINT</p>
+        <p className="text-xs mt-0.5" style={{ color: 'var(--muted)' }}>
+          A number between both draws: <span className="font-black text-base" style={{ color: 'var(--accent2)' }}>67</span>
+        </p>
+      </div>
+    ),
+  },
+  {
+    icon: '🏆',
+    title: 'Highest number wins',
+    desc: 'Once both players lock in a number, they\'re revealed. The higher number wins. Your number is hidden until the very end — so bluff wisely!',
+    visual: (
+      <div className="flex gap-2 mt-3 justify-center">
+        <div className="rounded-xl p-3 text-center flex-1"
+          style={{ background: 'rgba(108,99,255,0.12)', border: '2px solid var(--accent)' }}>
+          <p className="text-xs" style={{ color: 'var(--muted)' }}>You</p>
+          <p className="text-2xl font-black" style={{ color: 'var(--accent)' }}>83</p>
+          <p className="text-xs font-bold" style={{ color: 'var(--accent)' }}>Winner!</p>
+        </div>
+        <div className="rounded-xl p-3 text-center flex-1"
+          style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}>
+          <p className="text-xs" style={{ color: 'var(--muted)' }}>Them</p>
+          <p className="text-2xl font-black" style={{ color: 'var(--text)' }}>61</p>
+        </div>
+      </div>
+    ),
+  },
+];
+
 export default function Home() {
   const router = useRouter();
   const [tab, setTab] = useState<'create' | 'join'>('create');
@@ -23,6 +103,7 @@ export default function Home() {
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showHow, setShowHow] = useState(false);
 
   useEffect(() => { getOrCreatePlayerId(); }, []);
 
@@ -73,7 +154,7 @@ export default function Home() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6">
       {/* Title */}
-      <div className="mb-10 text-center">
+      <div className="mb-8 text-center">
         <h1 className="text-5xl font-black tracking-tight mb-2"
           style={{ background: 'linear-gradient(135deg, #6c63ff, #ff6584)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
           Number Battle
@@ -84,93 +165,8 @@ export default function Home() {
       </div>
 
       {/* Card */}
-      <div className="w-full max-w-sm rounded-2xl p-6"
+      <div className="w-full max-w-sm rounded-2xl p-6 mb-4"
         style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
 
         {/* Tabs */}
-        <div className="flex rounded-xl mb-6 overflow-hidden"
-          style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}>
-          {(['create', 'join'] as const).map(t => (
-            <button key={t} onClick={() => { setTab(t); setError(''); }}
-              className="flex-1 py-2.5 text-sm font-semibold capitalize transition-all duration-200"
-              style={{
-                background: tab === t ? 'var(--accent)' : 'transparent',
-                color: tab === t ? '#fff' : 'var(--muted)',
-              }}>
-              {t === 'create' ? 'Create Game' : 'Join Game'}
-            </button>
-          ))}
-        </div>
-
-        {/* Name input */}
-        <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--muted)' }}>
-          YOUR NAME
-        </label>
-        <input
-          value={name}
-          onChange={e => setName(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && (tab === 'create' ? handleCreate() : handleJoin())}
-          placeholder="Enter your name"
-          className="w-full rounded-lg px-4 py-3 text-sm mb-4 outline-none transition-all"
-          style={{
-            background: 'var(--bg)',
-            border: '1px solid var(--border)',
-            color: 'var(--text)',
-          }}
-          onFocus={e => (e.target.style.borderColor = 'var(--accent)')}
-          onBlur={e => (e.target.style.borderColor = 'var(--border)')}
-        />
-
-        {/* Code input (join only) */}
-        {tab === 'join' && (
-          <>
-            <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--muted)' }}>
-              GAME CODE
-            </label>
-            <input
-              value={code}
-              onChange={e => setCode(e.target.value.toUpperCase())}
-              onKeyDown={e => e.key === 'Enter' && handleJoin()}
-              placeholder="e.g. AB12CD"
-              maxLength={6}
-              className="w-full rounded-lg px-4 py-3 text-sm mb-4 outline-none font-mono tracking-widest"
-              style={{
-                background: 'var(--bg)',
-                border: '1px solid var(--border)',
-                color: 'var(--text)',
-              }}
-              onFocus={e => (e.target.style.borderColor = 'var(--accent)')}
-              onBlur={e => (e.target.style.borderColor = 'var(--border)')}
-            />
-          </>
-        )}
-
-        {error && (
-          <p className="text-xs mb-4 text-center" style={{ color: 'var(--accent2)' }}>{error}</p>
-        )}
-
-        <button
-          onClick={tab === 'create' ? handleCreate : handleJoin}
-          disabled={loading}
-          className="w-full py-3 rounded-xl font-bold text-sm transition-all duration-200 disabled:opacity-50"
-          style={{ background: 'var(--accent)', color: '#fff' }}
-          onMouseEnter={e => !loading && ((e.target as HTMLElement).style.filter = 'brightness(1.15)')}
-          onMouseLeave={e => ((e.target as HTMLElement).style.filter = '')}
-        >
-          {loading ? '...' : tab === 'create' ? 'Create Game' : 'Join Game'}
-        </button>
-      </div>
-
-      {/* Rules */}
-      <div className="mt-8 w-full max-w-sm rounded-xl p-4 text-xs"
-        style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--muted)' }}>
-        <p className="font-semibold mb-2" style={{ color: 'var(--text)' }}>How to play</p>
-        <p className="mb-1">• Each turn you receive a number (0–100)</p>
-        <p className="mb-1">• Accept it, take its complement (100−x), or reroll</p>
-        <p className="mb-1">• Rerolling passes the turn — you get your next number after your opponent moves</p>
-        <p className="mb-1">• A hint is revealed between both numbers after each full round of rerolls</p>
-        <p>• Max 5 rerolls per player — highest locked number wins!</p>
-      </div>
-    </div>
-  );
-}
+        <div className="flex rounded-xl mb-6
