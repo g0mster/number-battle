@@ -33,7 +33,7 @@ export interface GameState {
   cycleP2Number: number | null;
   winner: PlayerKey | 'tie' | null;
   createdAt: number;
-  // Rematch
-  rematchVotes: { player1: boolean; player2: boolean };
-  rematchGameId: string | null;
+  // Rematch (optional for backwards compat with existing games)
+  rematchVotes?: { player1: boolean; player2: boolean };
+  rematchGameId?: string | null;
 }
