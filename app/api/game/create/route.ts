@@ -12,15 +12,35 @@ export async function POST(req: NextRequest) {
     if (!playerName || !playerId) {
       return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
     }
+
     const id = randomId();
+
     const game: GameState = {
-      id, status: 'waiting',
-      player1: {id: playerId, name: playerName, lockedNumber: null, rerollsUsed: 0, hasLocked: false, lastGeneratedNumber: null},
-      player2: null, currentTurn: 'player1', currentNumber: null,
-      usedNumbers: [], lastAction: null, actionLog: [],
-      hintNumber: null, cycleP1Number: null, cycleP2Number: null,
-      winner: null, createdAt: Date.now(),
+      id,
+      status: 'waiting',
+      player1: {
+        id: playerId,
+        name: playerName,
+        lockedNumber: null,
+        rerollsUsed: 0,
+        hasLocked: false,
+        lastGeneratedNumber: null,
+      },
+      player2: null,
+      currentTurn: 'player1',
+      currentNumber: null,
+      usedNumbers: [],
+      lastAction: null,
+      actionLog: [],
+      hintNumber: null,
+      cycleP1Number: null,
+      cycleP2Number: null,
+      winner: null,
+      createdAt: Date.now(),
+      rematchVotes: { player1: false, player2: false },
+      rematchGameId: null,
     };
+
     await redis.set(`game:${id}`, JSON.stringify(game), { ex: 60 * 60 * 2 });
     return NextResponse.json({ gameId: id });
   } catch (e) {
